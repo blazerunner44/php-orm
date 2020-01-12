@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../vendor/autoload.php';
+require_once __DIR__ . '/vendor/autoload.php';
 use NilPortugues\Sql\QueryBuilder\Builder\GenericBuilder;
 class BuilderContainer{
 	private $builder;
@@ -53,6 +53,16 @@ class BuilderContainer{
 					$value = '';
 					break;
 				case 'integer':
+					break;
+				case 'object':
+					switch (get_class($value)) {
+						case 'DateTime':
+							$value = '"' . $value->format('Y-m-d H:i:s') . '"';
+							break;
+						default:
+							throw new Exception("Trying to insert unknown object type into query", 1);
+							break;
+					}
 					break;
 				default:
 					$value = addslashes($value);
