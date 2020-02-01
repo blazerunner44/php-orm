@@ -24,12 +24,50 @@ abstract class Model{
 			throw new Exception("Error executing query " . $query, 1);
 		}
 
+		$description = self::getTableDescription();
+
 		while($row = $result->fetch_array(MYSQLI_NUM)){
+			for ($i=0; $i < count($row); $i++) { //Convert to correct data type
+				switch ($description[$i]) {
+					case 'int':
+						$row[$i] = (int) $row[$i];
+						break;
+					case 'tinyint':
+						$row[$i] = (bool) $row[$i];
+						break;
+					case 'timestamp':
+						$row[$i] = new DateTime($row[$i]);
+						break;
+					default:
+						
+						break;
+				}
+			}
 			$obj = new static(...array_slice($row, 1, count($row)-1));
 			$obj->pk = $row[0];
 			array_push($list, $obj);
 		}
 		return $list;
+	}
+
+	public static function getTableDescription(){
+		$con = self::getConnection();
+		$columns = self::getArgsList();
+		array_unshift($columns, self::getPkField());
+		
+		$types = array();
+
+		$query = "SELECT distinct DATA_TYPE, COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = '". self::getTableName() . "' AND COLUMN_NAME IN ('". implode("','", $columns) . "') ORDER BY FIELD(COLUMN_NAME, '" . implode("','", $columns) . "')"; 
+		
+		$result = $con->query($query);
+		while($row = $result->fetch_array()){
+			array_push($types, $row['DATA_TYPE']);
+		}
+		if(empty($types)){
+			throw new Exception("Error getting table description for: " . self::getTableName(), 1);
+		} 
+
+		return $types;
 	}
 
 	public static function getByColumnEqual($colName, $colValue){
@@ -57,6 +95,8 @@ abstract class Model{
 				}else{
 					$array[$column] = $this->{$column};
 				}
+			}else{
+				echo "Column name [" . $column . "] is in constructor but value isn't accessible";
 			}
 		}
 		return $array;
@@ -109,7 +149,6 @@ abstract class Model{
 		foreach ($params as $param) {
 		    array_push($list, $param->getName());
 		}
-		var_dump($list);
 		return $list;
 	}
 
