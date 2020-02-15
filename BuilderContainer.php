@@ -68,9 +68,11 @@ class BuilderContainer{
 					$value = addslashes($value);
 					break;
 			}
-		    $query = str_replace($key, $value, $query);
+			$pos = strpos($query, $key);
+			if ($pos !== false) {
+			    $query = substr_replace($query, $value, $pos, strlen($key));
+			}
 		}
-
 		return $query;
 	}
 
