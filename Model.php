@@ -24,11 +24,15 @@ abstract class Model{
 			throw new Exception("Error executing query " . $query, 1);
 		}
 
-		$description = self::getTableDescription();
+		// $description = self::getTableDescription();
 
 		while($row = $result->fetch_array(MYSQLI_NUM)){
 			for ($i=0; $i < count($row); $i++) { //Convert to correct data type
-				switch ($description[$i]) {
+				$end = strpos($description[$i], '(');
+				if(empty($end)){
+					$end = strlen($description[$i]);
+				}
+				switch (substr($description[$i], 0, $end)) {
 					case 'int':
 						$row[$i] = (int) $row[$i];
 						break;
@@ -57,16 +61,19 @@ abstract class Model{
 		
 		$types = array();
 
-		$query = "SELECT distinct DATA_TYPE, COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = '". self::getTableName() . "' AND COLUMN_NAME IN ('". implode("','", $columns) . "') ORDER BY FIELD(COLUMN_NAME, '" . implode("','", $columns) . "')"; 
+		$query = "DESCRIBE " . self::getTableName(); 
 		
 		$result = $con->query($query);
+
 		while($row = $result->fetch_array()){
-			array_push($types, $row['DATA_TYPE']);
+			if (in_array($row['Field'], $columns)) {
+				// $types[$row['Field']] = $row['Type'];
+				array_push($types, $row['Type']);
+			}
 		}
 		if(empty($types)){
 			throw new Exception("Error getting table description for: " . self::getTableName(), 1);
 		} 
-
 		return $types;
 	}
 
@@ -89,7 +96,7 @@ abstract class Model{
 	public function serialize(){
 		$array = array();
 		foreach (self::getArgsList() as $column) {
-			if(!empty($this->{$column})){
+			if(!property_exists(self, $column)){
 				if(gettype($this->{$column}) == 'array'){
 					$array[$column] = json_encode($this->{$column});
 				}else{
