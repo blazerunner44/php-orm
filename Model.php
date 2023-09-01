@@ -27,29 +27,29 @@ abstract class Model{
 		// $description = self::getTableDescription();
 
 		while($row = $result->fetch_array(MYSQLI_NUM)){
-			// for ($i=0; $i < count($row); $i++) { //Convert to correct data type
-			// 	$end = strpos($description[$i], '(');
-			// 	if(empty($end)){
-			// 		$end = strlen($description[$i]);
-			// 	}
-			// 	switch (substr($description[$i], 0, $end)) {
-			// 		case 'int':
-			// 			$row[$i] = (int) $row[$i];
-			// 			break;
-			// 		case 'tinyint':
-			// 			$row[$i] = (bool) $row[$i];
-			// 			break;
-			// 		case 'timestamp':
-			// 			$row[$i] = new DateTime($row[$i]);
-			// 			break;
-			// 		default:
-						
-			// 			break;
-			// 	}
-			// }
+//			for ($i=0; $i < count($row); $i++) { //Convert to correct data type
+//				$end = strpos($description[$i], '(');
+//				if(empty($end)){
+//					$end = strlen($description[$i]);
+//				}
+//				switch (substr($description[$i], 0, $end)) {
+//					case 'int':
+//						$row[$i] = (int) $row[$i];
+//						break;
+//					case 'tinyint':
+//						$row[$i] = (bool) $row[$i];
+//						break;
+//					case 'timestamp':
+//						$row[$i] = new DateTime($row[$i]);
+//						break;
+//					default:
+//
+//						break;
+//				}
+//			}
 			$obj = new static(...array_slice($row, 1, count($row)-1));
 			$obj->pk = $row[0];
-			array_push($list, $obj);
+			$list[] = $obj;
 		}
 		return $list;
 	}
@@ -96,7 +96,7 @@ abstract class Model{
 	public function serialize(){
 		$array = array();
 		foreach (self::getArgsList() as $column) {
-			if(!property_exists(self, $column)){
+			if(!property_exists(self::class, $column)){
 				if(gettype($this->{$column}) == 'array'){
 					$array[$column] = json_encode($this->{$column});
 				}else{
